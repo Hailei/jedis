@@ -15,14 +15,15 @@ import redis.clients.jedis.tests.commands.async.util.AsyncJUnitTestCallback;
 
 public class AsyncGetSetBenchmark {
     private static HostAndPort hnp = HostAndPortUtil.getRedisServers().get(0);
-    private static final int TOTAL_OPERATIONS = 100000;
+    private static final int TOTAL_OPERATIONS = 1000000;
 
     public static void main(String[] args) throws UnknownHostException,
 	    IOException, InterruptedException {
-	AsyncJedis jedis = new AsyncJedis(hnp.getHost(), hnp.getPort(), "foobared");
+	//AsyncJedis jedis = new AsyncJedis(hnp.getHost(), hnp.getPort(), "foobared");
+	AsyncJedis jedis = new AsyncJedis("10.155.9.104",6379);
 	AsyncJUnitTestCallback<String> callback = new AsyncJUnitTestCallback<String>();
 	jedis.flushAll(callback);
-	callback.getResponseWithWaiting(1000);
+	callback.getResponseWithWaiting(500000);
 
 	long begin = Calendar.getInstance().getTimeInMillis();
 
