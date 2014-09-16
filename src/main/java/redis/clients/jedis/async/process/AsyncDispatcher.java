@@ -92,9 +92,7 @@ public class AsyncDispatcher extends Thread {
                 if (num < 0) {
                     continue;
                 }
-
                 Set selectedKeys = selector.selectedKeys();
-
                 Iterator it = selectedKeys.iterator();
                 while (it.hasNext()) {
                     SelectionKey key = (SelectionKey) it.next();
@@ -121,8 +119,13 @@ public class AsyncDispatcher extends Thread {
     }
 
     public synchronized void registerRequest(AsyncJedisTask task) {
-        
-        writeTaskQueue.add(task);
+        if(writeSuspended || inWriteNowLoop){
+            writeTaskQueue.add(task);
+        }else{
+            if(!_write(connection.getSocketChannel(), task)){
+                writeTaskQueue.addFirst(task);
+            }
+        }
         
         if (wakeUp.compareAndSet(false, true)) {
             selector.wakeup();
@@ -188,8 +191,7 @@ public class AsyncDispatcher extends Thread {
         
         int writtenLen = 0;
         boolean isFinish = false;
-        while(task.getWriteBuf().hasRemaining()){
-                
+        while(task.getWriteBuf().hasRemaining()){         
                 try {
                     writtenLen = sc.write(task.getWriteBuf());
                 } catch (IOException e) {
@@ -202,9 +204,12 @@ public class AsyncDispatcher extends Thread {
         if (task.isWriteComplete()) {
             readTaskQueue.add(task);
             writeSuspended = false;
+            isFinish = true;
         }else{
             writeSuspended = true;
         }
+        
+        return isFinish;
     }
 
     private void handleWrite(SocketChannel sc) throws IOException {
@@ -214,8 +219,7 @@ public class AsyncDispatcher extends Thread {
         AsyncJedisTask task = writeTaskQueue.peek();
         inWriteNowLoop = true;
         while (task != null && completeCount < writeHandleLimit) {
-
-           
+             _write(sc, task);           
         }
         inWriteNowLoop = false;
         
