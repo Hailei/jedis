@@ -21,34 +21,34 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 public class AsyncDispatcher extends Thread {
-	private static final int SELECTOR_SELECT_TIMEOUT = 300;
+    private static final int SELECTOR_SELECT_TIMEOUT = 300;
 
-	protected Logger log = Logger.getLogger(getClass().getName());
+    protected Logger log = Logger.getLogger(getClass().getName());
 
-	private Connection connection;
-	private Selector selector;
-	private AtomicBoolean shutdown = new AtomicBoolean(false);
+    private Connection connection;
+    private Selector selector;
+    private AtomicBoolean shutdown = new AtomicBoolean(false);
 
-	private final ByteBuffer readBuffer;
-	private AtomicBoolean wakeUp = new AtomicBoolean();
-	private volatile boolean inWriteNowLoop;
-	private volatile boolean writeSuspended;
-	private Deque<AsyncJedisTask> readTaskQueue = new LinkedBlockingDeque<AsyncJedisTask>();
-	private Deque<AsyncJedisTask> writeTaskQueue = new LinkedBlockingDeque<AsyncJedisTask>();
+    private final ByteBuffer readBuffer;
+    private AtomicBoolean wakeUp = new AtomicBoolean();
+    private volatile boolean inWriteNowLoop;
+    private volatile boolean writeSuspended;
+    private Deque<AsyncJedisTask> readTaskQueue = new LinkedBlockingDeque<AsyncJedisTask>();
+    private Deque<AsyncJedisTask> writeTaskQueue = new LinkedBlockingDeque<AsyncJedisTask>();
 
-	private String password;
-	private int writeHandleLimit = 100;
+    private String password;
+    private int writeHandleLimit = 100;
 
-	static {
-		/**
-		 * this is to avoid the jvm bug: NullPointerException in Selector.open()
-		 * http://bugs.sun.com/view_bug.do?bug_id=6427854
-		 */
-		try {
-			Selector.open().close();
-		} catch (IOException ie) {
-		}
-	}
+    static {
+       /**
+         * this is to avoid the jvm bug: NullPointerException in Selector.open()
+         * http://bugs.sun.com/view_bug.do?bug_id=6427854
+         */
+       try {
+            Selector.open().close();
+        } catch (IOException ie) {
+        }
+    }
 
 	public AsyncDispatcher(Connection connection, int bufferSize)
 			throws IOException {
